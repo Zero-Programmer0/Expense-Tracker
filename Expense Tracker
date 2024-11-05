@@ -1,0 +1,151 @@
+import csv
+import os
+from datetime import datetime
+
+# File to store expenses
+FILE_NAME = "data/expenses.csv"
+
+# Ensure the data directory exists
+if not os.path.exists('data'):
+    os.makedirs('data')
+
+
+def add_expense(expenses):
+    """Add an expense entry with date, description, and amount."""
+    description = input("Enter a description for the expense: ")
+    
+    while True:
+        try:
+            amount = float(input("Enter the expense amount: "))
+            break  # Exit the loop if input is valid
+        except ValueError:
+            print("Invalid amount. Please enter a number.")
+
+    date = input("Enter the date (YYYY-MM-DD), or leave blank for today: ")
+    if not date:
+        date = datetime.today().strftime('%Y-%m-%d')
+    
+    # Validate the date format
+    try:
+        datetime.strptime(date, '%Y-%m-%d')
+    except ValueError:
+        print("Invalid date format. Using today's date instead.")
+        date = datetime.today().strftime('%Y-%m-%d')
+
+    expense = {
+        "Date": date,
+        "Description": description,
+        "Amount": amount
+    }
+    expenses.append(expense)
+    print("Expense added!\n")
+
+
+def display_expenses(expenses):
+    """Display all expenses with a running total."""
+    if not expenses:
+        print("No expenses recorded yet.")
+        return
+    
+    print("\nDate       | Description          | Amount")
+    print("-" * 35)
+    total = 0
+    for expense in expenses:
+        print(f"{expense['Date']} | {expense['Description'][:18]:<18} | ${expense['Amount']:.2f}")
+        total += expense["Amount"]
+    print("-" * 35)
+    print(f"Total expenses: ${total:.2f}\n")
+
+
+def save_expenses(expenses):
+    """Save expenses to a CSV file."""
+    with open(FILE_NAME, mode='w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=["Date", "Description", "Amount"])
+        writer.writeheader()
+        writer.writerows(expenses)
+    print(f"Expenses saved to {FILE_NAME}!\n")
+
+
+def load_expenses():
+    """Load expenses from a CSV file, if available."""
+    try:
+        with open(FILE_NAME, mode='r') as file:
+            reader = csv.DictReader(file)
+            return list(reader)
+    except FileNotFoundError:
+        return []
+
+
+def edit_expense(expenses):
+    """Edit an existing expense."""
+    if not expenses:
+        print("No expenses to edit.")
+        return
+    
+    display_expenses(expenses)
+    index = int(input("Enter the index of the expense you want to edit (starting from 0): "))
+    
+    if 0 <= index < len(expenses):
+        description = input("Enter a new description for the expense (leave blank to keep current): ")
+        amount_input = input("Enter a new amount for the expense (leave blank to keep current): ")
+        
+        if description:
+            expenses[index]["Description"] = description
+        if amount_input:
+            try:
+                expenses[index]["Amount"] = float(amount_input)
+            except ValueError:
+                print("Invalid amount. Keeping the current amount.")
+        
+        print("Expense updated!\n")
+    else:
+        print("Invalid index. No changes made.\n")
+
+
+def delete_expense(expenses):
+    """Delete an existing expense."""
+    if not expenses:
+        print("No expenses to delete.")
+        return
+    
+    display_expenses(expenses)
+    index = int(input("Enter the index of the expense you want to delete (starting from 0): "))
+    
+    if 0 <= index < len(expenses):
+        expenses.pop(index)
+        print("Expense deleted!\n")
+    else:
+        print("Invalid index. No changes made.\n")
+
+
+def main():
+    expenses = load_expenses()
+    print("Welcome to the Expense Tracker!\n")
+    
+    while True:
+        print("1. Add an expense")
+        print("2. View expenses")
+        print("3. Edit an expense")
+        print("4. Delete an expense")
+        print("5. Save expenses")
+        print("6. Exit")
+        
+        choice = input("Choose an option: ")
+        if choice == '1':
+            add_expense(expenses)
+        elif choice == '2':
+            display_expenses(expenses)
+        elif choice == '3':
+            edit_expense(expenses)
+        elif choice == '4':
+            delete_expense(expenses)
+        elif choice == '5':
+            save_expenses(expenses)
+        elif choice == '6':
+            print("Exiting the Expense Tracker. Goodbye!")
+            break
+        else:
+            print("Invalid choice, please try again.\n")
+
+if __name__ == "__main__":
+    main()
